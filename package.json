@@ -1,0 +1,20 @@
+{
+  "name": "quantum-communication-simulator",
+  "version": "1.0.0",
+  "description": "Interactive Quantum Key Distribution (BB84 & Decoy State) Simulator with Eavesdropping (Eve) and Quantum Defenses",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node qkd_cli.js"
+  },
+  "keywords": [
+    "quantum-computing",
+    "quantum-cryptography",
+    "bb84",
+    "qkd",
+    "eavesdropping",
+    "simulator"
+  ],
+  "author": "Antigravity Quantum Lab",
+  "license": "MIT"
+}

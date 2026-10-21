@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BB84 QKD Simulation | Eavesdropping Detection & QBER Analysis</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Presentation Header & Team Banner (Quantum Core Aesthetic) -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="brand-symbol"></div>
+        <div class="brand">
+          <div class="academic-tag">BB84 QUANTUM CORE LAB // ACADEMIC PRESENTATION</div>
+          <h1>QUANTUM <span class="brand-core-highlight">CORE</span></h1>
+          <p class="subtitle">Eavesdropping Detection in the BB84 Protocol via Quantum Bit Error Rate (QBER) Analysis</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Quick Navigation Bar for Presentation Sections -->
+    <nav class="nav-bar">
+      <button class="nav-tab active" data-tab="simulation">🔬 Interactive Simulator</button>
+      <button class="nav-tab" data-tab="dual-compare">⚖️ Dual Scenario (No Eve vs Eve)</button>
+      <button class="nav-tab" data-tab="qber-curve">📈 QBER vs Interception Curve</button>
+      <button class="nav-tab" data-tab="qiskit-circuit">⚡ Qiskit Circuit View</button>
+      <button class="nav-tab" data-tab="methodology">📋 10-Step Methodology</button>
+      <button class="nav-tab" data-tab="literature">📚 Literature Survey & Goals</button>
+    </nav>
+
+    <!-- Dynamic Alert / Breach Banner -->
+    <section id="alertBanner" class="alert-banner banner-idle">
+      <h2 id="alertTitle"><span>⚡</span> System Ready</h2>
+      <p id="alertDesc">Configure parameters below and launch single photons or run a batch simulation to observe quantum eavesdropping and detection.</p>
+    </section>
+
+    <!-- TAB 1: MAIN SIMULATOR -->
+    <div id="tab-simulation" class="tab-content active">
+      <!-- Scenario Overview Quick Bar (Matching Slide 5) -->
+      <div class="scenario-bar">
+        <div class="scenario-pill scenario-case1">
+          <div class="scenario-badge">CASE 1</div>
+          <div class="scenario-diagram">
+            <span class="node-circle node-a">A</span>
+            <span class="channel-dash">— — —</span>
+            <span class="node-circle node-b">B</span>
+          </div>
+          <div class="scenario-info">
+            <strong>No Eve — Clean Key</strong>
+            <span>Expected: Negligible / near-zero error rate</span>
+          </div>
+        </div>
+
+        <div class="scenario-pill scenario-case2">
+          <div class="scenario-badge">CASE 2</div>
+          <div class="scenario-diagram">
+            <span class="node-circle node-a">A</span>
+            <span class="channel-dash">— —</span>
+            <span class="node-circle node-e">E</span>
+            <span class="channel-dash">— —</span>
+            <span class="node-circle node-b">B</span>
+          </div>
+          <div class="scenario-info">
+            <strong>Eve Present — Errors Appear</strong>
+            <span>Expected: ~25% QBER (Intercept-and-Resend)</span>
+          </div>
+        </div>
+
+        <button id="btnQuickDual" class="btn btn-dual-hero">
+          <span>⚖️</span> Compare Both Cases Side-by-Side
+        </button>
+      </div>
+
+      <!-- Visualizer Canvas + Compass Grid (Slide 1 & 6 layout) -->
+      <section class="vis-grid">
+        <div class="canvas-card">
+          <div class="canvas-header">
+            <h3>QUANTUM CHANNEL VISUALIZATION</h3>
+            <span style="font-size: 11px; color: var(--text-dim);">Alice [A] ➔ Channel [Eve Tap E] ➔ Bob [B]</span>
+          </div>
+          <canvas id="quantumCanvas"></canvas>
+        </div>
+
+        <div class="compass-card">
+          <h3>POLARIZATION STATE</h3>
+          <canvas id="compassCanvas"></canvas>
+          <div class="compass-legend">
+            <div><span style="color: #ffffff; font-weight: 700;">+ Rectilinear</span>: |0⟩ (0° H), |1⟩ (90° V)</div>
+            <div><span style="color: var(--copper-glow); font-weight: 700;">× Diagonal</span>: |+⟩ (45°), |-⟩ (135°)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10-Step Methodology Active Progress Tracker (Slide 7) -->
+      <section class="panel-card" style="margin-bottom: 24px; padding: 16px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="font-size: 13px; font-weight: 700; color: var(--cyan); display: flex; align-items: center; gap: 8px;">
+            <span>🛤️</span> 10-STEP SIMULATION PIPELINE (METHODOLOGY)
+          </h4>
+          <span id="activeStepIndicator" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+            Step 1: Alice generates random bits
+          </span>
+        </div>
+        <div class="pipeline-tracker" id="pipelineTracker">
+          <div class="step-chip active" data-step="1"><span>1</span> Gen Bits</div>
+          <div class="step-chip" data-step="2"><span>2</span> Alice Bases</div>
+          <div class="step-chip" data-step="3"><span>3</span> Encode Qubits</div>
+          <div class="step-chip" data-step="4"><span>4</span> Transmit</div>
+          <div class="step-chip" data-step="5"><span>5</span> Eve Intercept</div>
+          <div class="step-chip" data-step="6"><span>6</span> Bob Measure</div>
+          <div class="step-chip" data-step="7"><span>7</span> Sift Bases</div>
+          <div class="step-chip" data-step="8"><span>8</span> Sample Check</div>
+          <div class="step-chip" data-step="9"><span>9</span> Calc QBER</div>
+          <div class="step-chip" data-step="10"><span>10</span> Detection</div>
+        </div>
+      </section>
+
+      <!-- Controls & Real-Time Stats -->
+      <section class="control-stats-grid">
+        <!-- Simulation Controls -->
+        <div class="panel-card">
+          <h3 class="panel-title"><span>🎛️</span> Simulation Parameters</h3>
+
+          <!-- Eve Eavesdropper Toggle -->
+          <div class="control-group">
+            <label class="switch-label">
+              <span>Activate Eavesdropper (Eve)</span>
+              <div class="switch">
+                <input type="checkbox" id="eveToggle" checked>
+                <span class="slider-switch"></span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Eve Intercept Rate -->
+          <div class="control-group">
+            <label>
+              <span>Eve Intercept Probability</span>
+              <span id="eveRateVal" style="color: var(--amber); font-family: var(--font-mono);">100%</span>
+            </label>
+            <input type="range" id="eveRateSlider" min="0" max="100" value="100">
+          </div>
+
+          <!-- Environmental Channel Noise -->
+          <div class="control-group">
+            <label>
+              <span>Channel Noise Rate</span>
+              <span id="noiseVal" style="color: var(--cyan); font-family: var(--font-mono);">2%</span>
+            </label>
+            <input type="range" id="noiseSlider" min="0" max="15" value="2">
+          </div>
+
+          <!-- QBER Error Threshold -->
+          <div class="control-group">
+            <label>
+              <span>QBER Abort Threshold</span>
+              <span id="thresholdVal" style="color: var(--rose); font-family: var(--font-mono);">11%</span>
+            </label>
+            <input type="range" id="thresholdSlider" min="5" max="25" value="11" step="0.5">
+          </div>
+
+          <!-- Sample Fraction for Error Check -->
+          <div class="control-group">
+            <label><span>Sample Checked for Error</span></label>
+            <select id="sampleFractionSelect">
+              <option value="0.20">20% of Sifted Key</option>
+              <option value="0.33" selected>33% of Sifted Key (Standard)</option>
+              <option value="0.50">50% of Sifted Key (Strict)</option>
+            </select>
+          </div>
+
+          <!-- Batch Count -->
+          <div class="control-group">
+            <label><span>Batch Qubit Count</span></label>
+            <select id="qubitCountSelect">
+              <option value="50" selected>50 Qubits</option>
+              <option value="100">100 Qubits</option>
+              <option value="250">250 Qubits</option>
+              <option value="1000">1,000 Qubits (Deep Statistics)</option>
+            </select>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="btn-group">
+            <button id="btnSendPhoton" class="btn btn-primary"><span>🚀</span> Send 1 Photon</button>
+            <button id="btnAutoPlay" class="btn"><span>▶️</span> Auto Play</button>
+            <button id="btnBatchRun" class="btn btn-batch"><span>⚡</span> Batch Run</button>
+            <button id="btnReset" class="btn"><span>🔄</span> Reset</button>
+          </div>
+        </div>
+
+        <!-- Telemetry & QBER Security Gauge -->
+        <div class="panel-card">
+          <h3 class="panel-title"><span>📊</span> Telemetry & QBER Analysis</h3>
+
+          <!-- Metrics Grid -->
+          <div class="stats-summary">
+            <div class="stat-box">
+              <div class="stat-label">Total Photons</div>
+              <div id="statSent" class="stat-num">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Sifted Bits</div>
+              <div id="statSifted" class="stat-num">0 (0%)</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Sample Tested</div>
+              <div id="statTested" class="stat-num">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Errors Detected</div>
+              <div id="statErrors" class="stat-num">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Eve Intercepts</div>
+              <div id="statEveIntercepts" class="stat-num" style="color: var(--amber);">0</div>
+            </div>
+          </div>
+
+          <!-- Live QBER Gauge Bar -->
+          <div class="qber-gauge-container">
+            <div class="qber-header">
+              <span class="qber-title">QUANTUM BIT ERROR RATE (QBER)</span>
+              <span id="qberValueText" class="qber-val" style="color: var(--cyan);">0.0%</span>
+            </div>
+            <div class="qber-bar-bg">
+              <div id="qberMeterBar" class="qber-bar qber-normal" style="width: 0%;"></div>
+              <div id="qberMeterThreshold" class="threshold-marker" style="left: 22%;"></div>
+            </div>
+            <div class="gauge-legend">
+              <span>0% Clean Channel</span>
+              <span style="color: #f87171;">▲ 11.0% Shor-Preskill Security Bound</span>
+              <span>50% Max Scrambled</span>
+            </div>
+          </div>
+
+          <!-- Real-time Event Terminal Log -->
+          <div class="event-log-container" id="logBox"></div>
+        </div>
+      </section>
+
+      <!-- Step-by-Step Quantum Transmission Table -->
+      <section class="table-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 class="panel-title" style="margin-bottom: 0;"><span>📜</span> Qubit Transmission Inspector</h3>
+          <span style="font-size: 11px; color: var(--text-dim);">Bit & Basis Selection ➔ Interception Collapse ➔ Sifting & Error Check</span>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Alice Bit</th>
+                <th>Alice Basis</th>
+                <th>Sent State</th>
+                <th>Eve Intercept</th>
+                <th>Bob Basis</th>
+                <th>Bob Bit</th>
+                <th>Sifted?</th>
+                <th>Integrity</th>
+                <th>Physical Outcome & Explanation</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- End-to-End Encryption Playground -->
+      <section class="panel-card" style="margin-bottom: 24px;">
+        <h3 class="panel-title"><span>🔐</span> End-to-End Quantum Cryptography Demo (One-Time Pad)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+          Once the quantum key is sifted and verified (QBER ≤ 11%), Alice and Bob distill an identical secret key through 
+          <strong>Privacy Amplification</strong>. Alice then encrypts plaintext with Vernam's One-Time Pad ($C = P \oplus K$).
+        </p>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <input type="text" id="secretInput" value="TOP SECRET QUANTUM KEY 2026" 
+                 style="flex: 1; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; outline: none;">
+          <button id="btnEncrypt" class="btn btn-primary">Encrypt & Transmit</button>
+        </div>
+
+        <div class="crypto-grid">
+          <div class="crypto-box">
+            <h4>Alice's Distilled Quantum Key ($K_A$)</h4>
+            <code id="keyAliceDisp">Run batch simulation or send photons to generate key...</code>
+          </div>
+          <div class="crypto-box">
+            <h4>Bob's Distilled Quantum Key ($K_B$)</h4>
+            <code id="keyBobDisp">Awaiting quantum reconciliation...</code>
+          </div>
+          <div class="crypto-box">
+            <h4>Encrypted Ciphertext Transmitted (Hex)</h4>
+            <code id="cipherHexDisp">—</code>
+          </div>
+          <div class="crypto-box">
+            <h4>Bob's Decrypted Plaintext ($P_B$)</h4>
+            <code id="plainDecryptedDisp" style="color: #34d399;">—</code>
+          </div>
+          <div class="crypto-box crypto-box-eve">
+            <h4>Eve's Decryption Attempt ($P_E$)</h4>
+            <code id="eveDecryptedDisp">—</code>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 2: DUAL SCENARIO COMPARISON (Slide 5 & 7) -->
+    <div id="tab-dual-compare" class="tab-content">
+      <div class="panel-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h3 class="panel-title" style="margin-bottom: 4px;"><span>⚖️</span> Side-by-Side Scenario Comparison (Slide 5 & 7)</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Direct contrast of <strong>Case 1 (No Eve)</strong> vs <strong>Case 2 (Eve Present)</strong> transmitted across identical qubit streams.
+            </p>
+          </div>
+          <button id="btnRunDualCompare" class="btn btn-primary"><span>⚡</span> Run 100-Qubit Comparison</button>
+        </div>
+
+        <div class="dual-grid">
+          <!-- Case 1 Card -->
+          <div class="dual-card dual-card-clean">
+            <div class="dual-header">
+              <span class="scenario-badge badge-green">CASE 1</span>
+              <h4>NO EVE (Clean Channel)</h4>
+            </div>
+            <div class="scenario-diagram" style="justify-content: flex-start; margin: 12px 0;">
+              <span class="node-circle node-a">A</span>
+              <span class="channel-dash">— — — — —</span>
+              <span class="node-circle node-b">B</span>
+            </div>
+            <div class="dual-expected">
+              <strong>Expected Observation:</strong> Negligible / near-zero error rate observed (&lt; 2%)
+            </div>
+            <div class="dual-metrics">
+              <div class="dual-metric-row"><span>Total Sent:</span> <strong id="dualC1Sent">100</strong></div>
+              <div class="dual-metric-row"><span>Sifted Key:</span> <strong id="dualC1Sifted">—</strong></div>
+              <div class="dual-metric-row"><span>Sample Tested:</span> <strong id="dualC1Tested">—</strong></div>
+              <div class="dual-metric-row"><span>Errors Found:</span> <strong id="dualC1Errors" style="color: #34d399;">—</strong></div>
+              <div class="dual-metric-row"><span>Measured QBER:</span> <strong id="dualC1QBER" style="color: #34d399; font-size: 16px;">—</strong></div>
+              <div class="dual-metric-row"><span>Key Distillation:</span> <strong id="dualC1Status" style="color: #34d399;">—</strong></div>
+            </div>
+            <div class="dual-key-preview">
+              <label>Distilled Key Preview:</label>
+              <code id="dualC1Key">Click "Run 100-Qubit Comparison" to evaluate</code>
+            </div>
+          </div>
+
+          <!-- Case 2 Card -->
+          <div class="dual-card dual-card-eve">
+            <div class="dual-header">
+              <span class="scenario-badge badge-red">CASE 2</span>
+              <h4>EVE PRESENT (Intercept & Resend)</h4>
+            </div>
+            <div class="scenario-diagram" style="justify-content: flex-start; margin: 12px 0;">
+              <span class="node-circle node-a">A</span>
+              <span class="channel-dash">— —</span>
+              <span class="node-circle node-e">E</span>
+              <span class="channel-dash">— —</span>
+              <span class="node-circle node-b">B</span>
+            </div>
+            <div class="dual-expected" style="border-left-color: #f87171;">
+              <strong>Expected Observation:</strong> ~25% QBER on the sifted key (ideal intercept-and-resend case)
+            </div>
+            <div class="dual-metrics">
+              <div class="dual-metric-row"><span>Total Sent:</span> <strong id="dualC2Sent">100</strong></div>
+              <div class="dual-metric-row"><span>Sifted Key:</span> <strong id="dualC2Sifted">—</strong></div>
+              <div class="dual-metric-row"><span>Sample Tested:</span> <strong id="dualC2Tested">—</strong></div>
+              <div class="dual-metric-row"><span>Errors Found:</span> <strong id="dualC2Errors" style="color: #f87171;">—</strong></div>
+              <div class="dual-metric-row"><span>Measured QBER:</span> <strong id="dualC2QBER" style="color: #f87171; font-size: 16px;">—</strong></div>
+              <div class="dual-metric-row"><span>Security Verdict:</span> <strong id="dualC2Status" style="color: #f87171;">—</strong></div>
+            </div>
+            <div class="dual-key-preview">
+              <label>Protocol Action:</label>
+              <code id="dualC2Key" style="color: #fca5a5;">Awaiting execution...</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparative Synthesis Table -->
+        <div style="margin-top: 20px;">
+          <h4 style="font-size: 13px; font-weight: 700; color: var(--cyan); margin-bottom: 8px;">SCIENTIFIC COMPARISON SUMMARY</h4>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr>
+                <th>Feature / Metric</th>
+                <th>Case 1: No Eve</th>
+                <th>Case 2: Eve Present (Intercept-Resend)</th>
+                <th>Physical Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Channel Noise (QBER)</strong></td>
+                <td><span class="badge badge-green">&lt; 2%</span></td>
+                <td><span class="badge badge-red">~25.0%</span></td>
+                <td>Eve chooses wrong basis 50% of the time $\to$ induces 50% bit-flip on Bob ($0.5 \times 0.5 = 25\%$).</td>
+              </tr>
+              <tr>
+                <td><strong>Security Threshold (11%)</strong></td>
+                <td><span class="badge badge-green">Within Bound</span></td>
+                <td><span class="badge badge-red">Threshold Exceeded</span></td>
+                <td>11.0% is the Shor-Preskill limit where Alice & Bob's mutual information exceeds Eve's.</td>
+              </tr>
+              <tr>
+                <td><strong>Shared Secret Key</strong></td>
+                <td><span class="badge badge-green">Successfully Distilled</span></td>
+                <td><span class="badge badge-red">ABORTED (Destroyed)</span></td>
+                <td>Keys are discarded immediately; Eve gains zero usable information.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: QBER VS INTERCEPTION FRACTION CURVE (Slide 4: arXiv:2603.27278) -->
+    <div id="tab-qber-curve" class="tab-content">
+      <div class="panel-card">
+        <h3 class="panel-title"><span>📈</span> QBER vs. Interception Fraction Curve (arXiv:2603.27278 Review)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          As validated in literature (Lee et al. 2023 &amp; arXiv:2603.27278), the Quantum Bit Error Rate rises near-linearly with Eve's interception fraction $f$, saturating at ~25% under full intercept-and-resend:
+          <code style="color: var(--cyan); background: rgba(56,189,248,0.1); padding: 2px 6px; border-radius: 4px;">QBER(f) = 0.25 × f + e_channel</code>
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 20px;">
+          <div>
+            <canvas id="qberCurveCanvas" style="width: 100%; height: 320px; background: #070b14; border-radius: 10px; border: 1px solid var(--border-subtle);"></canvas>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+              <span>Intercept Fraction: 0% (Clean)</span>
+              <span style="color: #f87171;">Threshold 11.0% (Intercept ~40%)</span>
+              <span>100% Intercept (QBER ~25%)</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div class="stat-box" style="text-align: left;">
+              <div class="stat-label">Theoretical Slope</div>
+              <div class="stat-num" style="font-size: 18px;">25.0% / 100%</div>
+              <span style="font-size: 11px; color: var(--text-muted);">0.25 error probability per intercepted photon</span>
+            </div>
+
+            <div class="stat-box" style="text-align: left;">
+              <div class="stat-label">Critical Detection Point</div>
+              <div class="stat-num" style="font-size: 18px; color: #f87171;">f ≈ 36% - 44%</div>
+              <span style="font-size: 11px; color: var(--text-muted);">Intercepting even ~40% of qubits trips the 11% Shor-Preskill alarm!</span>
+            </div>
+
+            <button id="btnSweepQBER" class="btn btn-primary" style="margin-top: auto;">
+              <span>🧪</span> Sweep Empirical Data Points
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: QISKIT QUANTUM CIRCUIT VIEW (Slide 4 & 8) -->
+    <div id="tab-qiskit-circuit" class="tab-content">
+      <div class="panel-card">
+        <h3 class="panel-title"><span>⚡</span> Qiskit Circuit & Quantum State Operator Representation</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          How the BB84 protocol and Eve's intercept-and-resend attack are represented as quantum gates and measurement operators in IBM Qiskit:
+        </p>
+
+        <div class="circuit-container">
+          <div class="circuit-diagram">
+            <div class="circuit-wire">
+              <span class="qubit-label">|0⟩_A</span>
+              <div class="gate gate-prep" id="circAlicePrep">X (Bit 1)</div>
+              <div class="gate gate-hadamard" id="circAliceBasis">H (x Basis)</div>
+              <div class="channel-wire">
+                <span>Quantum Channel</span>
+              </div>
+              <div class="gate gate-eve" id="circEveMeas">M_E (x)</div>
+              <div class="gate gate-hadamard" id="circBobBasis">H (x Basis)</div>
+              <div class="gate gate-meas" id="circBobMeas">M_B</div>
+              <span class="classic-reg">c: [1]</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="qiskit-code-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 11px; font-weight: 700; color: #a5b4fc;">PYTHON (QISKIT) IMPLEMENTATION (Mina &amp; Simion 2020)</span>
+            <span style="font-size: 11px; color: var(--text-dim);">from qiskit import QuantumCircuit, Aer, execute</span>
+          </div>
+          <pre><code id="qiskitCodeBlock"># Alice prepares state |psi>
+qc = QuantumCircuit(1, 1)
+if alice_bit == 1:
+    qc.x(0) # Apply Pauli-X to flip |0> -> |1>
+if alice_basis == 'x':
+    qc.h(0) # Apply Hadamard gate for diagonal basis
+
+# Eve's Intercept-and-Resend Attack:
+if eve_active:
+    if eve_basis == 'x':
+        qc.h(0)
+    qc.measure(0, 0) # Wavefunction collapse!
+    # Eve prepares replacement qubit in measured state
+
+# Bob's Measurement:
+if bob_basis == 'x':
+    qc.h(0)
+qc.measure(0, 0)</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: 10-STEP METHODOLOGY DETAILS (Slide 7) -->
+    <div id="tab-methodology" class="tab-content">
+      <div class="panel-card">
+        <h3 class="panel-title"><span>📋</span> Methodology & Plan of Action (From Presentation Slide 7)</h3>
+        <div class="methodology-steps-grid">
+          <div class="method-card">
+            <span class="method-num">01</span>
+            <h4>Generate Random Bits</h4>
+            <p>Alice generates a random binary bit sequence $A \in \{0, 1\}^N$ using quantum or cryptographic random number generation.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">02</span>
+            <h4>Select Random Bases for Alice</h4>
+            <p>Alice chooses randomly between Rectilinear ($+$) and Diagonal ($\times$) bases for each photon.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">03</span>
+            <h4>Encode Qubits</h4>
+            <p>Photons are prepared in $|0\rangle, |1\rangle, |+\rangle, |-\rangle$ polarization angles ($0^\circ, 90^\circ, 45^\circ, 135^\circ$).</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">04</span>
+            <h4>Simulate Quantum Transmission</h4>
+            <p>Single photons propagate across optical fiber / free space subject to environmental attenuation and noise.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">05</span>
+            <h4>Introduce Eve (Intercept & Resend)</h4>
+            <p>Eve intercepts qubits, measures in a random basis, collapses the wavefunction, and sends a new photon to Bob.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">06</span>
+            <h4>Bob Measures Using Random Bases</h4>
+            <p>Bob independently selects random bases ($+$ or $\times$) and records single-photon detector clicks.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">07</span>
+            <h4>Sift Matching Bases</h4>
+            <p>Alice and Bob announce bases over classical channel; bits with mismatched bases are discarded (~50%).</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">08</span>
+            <h4>Compare Sample Bits</h4>
+            <p>Alice and Bob publicly reveal a random test fraction (33%) of the sifted key to estimate channel integrity.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">09</span>
+            <h4>Calculate QBER</h4>
+            <p>Compute error rate: $\text{QBER} = \frac{\text{errors observed}}{\text{tested sample bits}}$.</p>
+          </div>
+          <div class="method-card">
+            <span class="method-num">10</span>
+            <h4>Detect Possible Eavesdropping</h4>
+            <p>Compare QBER against 11% threshold: Abort if exceeded, or distill secret key via privacy amplification.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: LITERATURE SURVEY & FOUNDATIONS (Slide 2, 3, 4, 8) -->
+    <div id="tab-literature" class="tab-content">
+      <div class="panel-card">
+        <h3 class="panel-title"><span>📚</span> Literature Survey & Academic Foundations</h3>
+        <div class="theory-grid">
+          <div class="theory-card">
+            <h4>1. Bennett & Brassard (1984)</h4>
+            <p><strong>"Quantum Cryptography: Public Key Distribution and Coin Tossing"</strong>, Proc. IEEE Int. Conf. on Computers, Systems and Signal Processing.</p>
+            <p>The original seminal paper that introduced the BB84 protocol and conjugate photon bases $\{+, \times\}$.</p>
+          </div>
+          <div class="theory-card">
+            <h4>2. Shor & Preskill (2000)</h4>
+            <p><strong>"Simple Proof of Security of the BB84 Quantum Key Distribution Protocol"</strong>, Phys. Rev. Lett. 85, 441.</p>
+            <p>Provided the first rigorous, unconditional security proof for BB84 using Calderbank-Shor-Steane (CSS) quantum codes, establishing the 11.0% QBER bound.</p>
+          </div>
+          <div class="theory-card">
+            <h4>3. Gisin, Ribordy, Tittel & Zbinden (2002)</h4>
+            <p><strong>"Quantum Cryptography"</strong>, Reviews of Modern Physics 74, 145.</p>
+            <p>A comprehensive benchmark review covering BB84 theory, intercept-resend eavesdropping strategies, and experimental QKD implementations.</p>
+          </div>
+          <div class="theory-card">
+            <h4>4. Mina & Simion (2020)</h4>
+            <p><strong>"A Scalable Simulation of the BB84 Protocol Involving Eavesdropping"</strong>, IACR ePrint 2020/1074.</p>
+            <p>Demonstrated Qiskit-based BB84 simulation of the intercept-resend attack and statistical eavesdropping estimation.</p>
+          </div>
+          <div class="theory-card">
+            <h4>5. Lee, Lee & Lee (2023)</h4>
+            <p><strong>"Analysis on Eavesdropper Detection in BB84 QKD Protocol against Partial Intercept-and-Resend Attack"</strong>, IFIP ONDM 2023.</p>
+            <p>Analyzed QBER-threshold detection algorithms for noisy optical channels under partial interception fractions.</p>
+          </div>
+          <div class="theory-card">
+            <h4>6. QBER Analysis Review (2026)</h4>
+            <p><strong>"Quantum Bit Error Rate Analysis in BB84 QKD: Measurement, Statistical Estimation, and Eavesdropping Detection"</strong>, arXiv:2603.27278.</p>
+            <p>Confirms that QBER rises near-linearly with interception fraction, saturating at ~25% under full intercept-and-resend.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        <strong>QUANTUM CORE</strong> &bull; BB84 Quantum Key Distribution &amp; Eavesdropping Detection Simulator
+      </p>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/quantum-engine.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
