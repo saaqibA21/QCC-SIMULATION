@@ -16,9 +16,9 @@
       <div class="brand-wrapper">
         <div class="brand-symbol"></div>
         <div class="brand">
-          <div class="academic-tag">BB84 QUANTUM CORE LAB // ACADEMIC PRESENTATION</div>
-          <h1>QUANTUM <span class="brand-core-highlight">CORE</span></h1>
-          <p class="subtitle">Eavesdropping Detection in the BB84 Protocol via Quantum Bit Error Rate (QBER) Analysis</p>
+          <div class="academic-tag">QUANTUM COMMUNICATION &amp; CRYPTOGRAPHY // MDI-QKD SIMULATION</div>
+          <h1>QUANTUM <span class="brand-core-highlight">CORE</span> // MDI-QKD</h1>
+          <p class="subtitle">Measurement-Device-Independent Quantum Key Distribution: A Simulation Study of Detector-Attack Immunity vs Standard QKD</p>
         </div>
       </div>
     </header>
@@ -26,11 +26,13 @@
     <!-- Quick Navigation Bar for Presentation Sections -->
     <nav class="nav-bar">
       <button class="nav-tab active" data-tab="simulation">🔬 Interactive Simulator</button>
+      <button class="nav-tab" data-tab="mdi-comparison">🛡️ MDI-QKD vs BB84 Immunity</button>
+      <button class="nav-tab" data-tab="distance-analytics">📊 Distance &amp; Loss Analytics (0-100km)</button>
       <button class="nav-tab" data-tab="dual-compare">⚖️ Dual Scenario (No Eve vs Eve)</button>
       <button class="nav-tab" data-tab="qber-curve">📈 QBER vs Interception Curve</button>
       <button class="nav-tab" data-tab="qiskit-circuit">⚡ Qiskit Circuit View</button>
       <button class="nav-tab" data-tab="methodology">📋 10-Step Methodology</button>
-      <button class="nav-tab" data-tab="literature">📚 Literature Survey & Goals</button>
+      <button class="nav-tab" data-tab="literature">📚 Literature Review (MDI-QKD)</button>
     </nav>
 
     <!-- Dynamic Alert / Breach Banner -->
@@ -125,6 +127,33 @@
         <!-- Simulation Controls -->
         <div class="panel-card">
           <h3 class="panel-title"><span>🎛️</span> Simulation Parameters</h3>
+
+          <!-- Protocol Switcher: BB84 vs MDI-QKD -->
+          <div class="control-group">
+            <label><span>Quantum Protocol</span></label>
+            <select id="protocolSelect">
+              <option value="bb84" selected>BB84 Protocol (Baseline QKD)</option>
+              <option value="mdi">MDI-QKD (Measurement-Device-Independent)</option>
+            </select>
+          </div>
+
+          <!-- Adversary Attack Model: Intercept-Resend vs Detector-Blinding -->
+          <div class="control-group">
+            <label><span>Adversary Attack Strategy</span></label>
+            <select id="attackStrategySelect">
+              <option value="intercept-resend" selected>Intercept-and-Resend (Channel Attack)</option>
+              <option value="detector-blinding">Detector-Blinding Attack (SPAD Side-Channel)</option>
+            </select>
+          </div>
+
+          <!-- Fiber Link Distance -->
+          <div class="control-group">
+            <label>
+              <span>Fiber Distance (0.2 dB/km)</span>
+              <span id="distanceVal" style="color: var(--copper-glow); font-family: var(--font-mono);">20 km (4.0 dB)</span>
+            </label>
+            <input type="range" id="distanceSlider" min="0" max="100" value="20" step="5">
+          </div>
 
           <!-- Eve Eavesdropper Toggle -->
           <div class="control-group">
@@ -308,6 +337,163 @@
           </div>
         </div>
       </section>
+    </div>
+
+    <!-- TAB: MDI-QKD VS BB84 DETECTOR IMMUNITY (NEW CORE FEATURE) -->
+    <div id="tab-mdi-comparison" class="tab-content">
+      <div class="panel-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 class="panel-title" style="margin-bottom: 4px;"><span>🛡️</span> MDI-QKD vs. Standard BB84: Detector-Attack Immunity</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Testing the <strong>Detector-Blinding Attack (Lydersen et al. 2010)</strong> on trusted detectors (BB84) vs an untrusted relay (MDI-QKD).
+            </p>
+          </div>
+          <button id="btnRunMDICompare" class="btn btn-primary"><span>⚔️</span> Run Detector Attack Showdown</button>
+        </div>
+
+        <div class="dual-grid">
+          <!-- BB84 Under Blinding -->
+          <div class="dual-card" style="border-left: 4px solid var(--accent-crimson);">
+            <div class="dual-header">
+              <span class="scenario-badge badge-red">BB84 VULNERABILITY</span>
+              <h4>STANDARD BB84 (Detector-Blinded)</h4>
+            </div>
+            <div class="dual-expected" style="border-left-color: #f87171;">
+              <strong>Hardware Loophole:</strong> Eve blinds Bob's SPADs with CW laser into linear regime, then triggers deterministic clicks with classical pulses.
+            </div>
+            <div class="dual-metrics">
+              <div class="dual-metric-row"><span>Bob Measured QBER:</span> <strong id="showdownBB84QBER" style="color: #34d399; font-size: 16px;">0.0% (Stealth!)</strong></div>
+              <div class="dual-metric-row"><span>Eve Stolen Key:</span> <strong id="showdownBB84Stolen" style="color: #f87171; font-size: 16px;">100.0% LEAKED</strong></div>
+              <div class="dual-metric-row"><span>QBER Alarm:</span> <strong style="color: #34d399;">NOT TRIGGERED</strong></div>
+              <div class="dual-metric-row"><span>Security Verdict:</span> <strong style="color: #f87171;">COMPROMISED</strong></div>
+            </div>
+            <div class="dual-key-preview">
+              <label>Vulnerability Impact:</label>
+              <code style="color: #fca5a5;">FATAL BREACH: Bob's QBER remains below threshold (0%). Alice &amp; Bob trust the key, while Eve holds an exact copy!</code>
+            </div>
+          </div>
+
+          <!-- MDI-QKD Under Blinding -->
+          <div class="dual-card" style="border-left: 4px solid var(--accent-emerald);">
+            <div class="dual-header">
+              <span class="scenario-badge badge-green">MDI-QKD DEFENSE</span>
+              <h4>MDI-QKD (Untrusted BSM Relay)</h4>
+            </div>
+            <div class="dual-expected" style="border-left-color: #34d399;">
+              <strong>Architectural Fix:</strong> Alice &amp; Bob transmit to untrusted Charlie relay. Charlie only announces Bell states (|ψ⁻⟩). No detector trust required!
+            </div>
+            <div class="dual-metrics">
+              <div class="dual-metric-row"><span>Charlie Output:</span> <strong id="showdownMDIBell" style="color: #38bdf8;">|ψ⁻⟩ Parity Only</strong></div>
+              <div class="dual-metric-row"><span>Eve Stolen Key:</span> <strong id="showdownMDIStolen" style="color: #34d399; font-size: 16px;">0.0% (ZERO LEAK)</strong></div>
+              <div class="dual-metric-row"><span>Relay Trust Req:</span> <strong style="color: #34d399;">0% (UNTABLE RELAY)</strong></div>
+              <div class="dual-metric-row"><span>Security Verdict:</span> <strong style="color: #34d399;">100% IMMUNE</strong></div>
+            </div>
+            <div class="dual-key-preview">
+              <label>Immunity Result:</label>
+              <code style="color: #86efac;">PERFECT SECURITY: Even if Eve controls Charlie's detectors completely, she only learns mutual parity, giving 0 bits of Alice or Bob's key!</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparative Synthesis Table -->
+        <div style="margin-top: 20px;">
+          <h4 style="font-size: 13px; font-weight: 800; color: var(--copper-glow); margin-bottom: 10px; letter-spacing: 0.5px;">PROTOCOL SECURITY MATRIX (BB84 VS. MDI-QKD)</h4>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr>
+                <th>Security Property</th>
+                <th>Standard BB84</th>
+                <th>MDI-QKD (Lo et al. 2012)</th>
+                <th>MDI-QKD Architectural Advantage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Detector Trust Assumption</strong></td>
+                <td><span class="badge badge-red">Requires 100% Trusted SPADs</span></td>
+                <td><span class="badge badge-green">0% Trust in Detectors (Untrusted Relay)</span></td>
+                <td>All measurement devices placed at relay; Alice and Bob only possess transmitters.</td>
+              </tr>
+              <tr>
+                <td><strong>Detector-Blinding Attack</strong></td>
+                <td><span class="badge badge-red">Vulnerable (Key Leaks at QBER ≈ 0%)</span></td>
+                <td><span class="badge badge-green">Mathematically Immune</span></td>
+                <td>Relay output is a Bell-state projection; individual bit values are never measured.</td>
+              </tr>
+              <tr>
+                <td><strong>Time-Shift &amp; Efficiency Mismatch</strong></td>
+                <td><span class="badge badge-red">Exploitable Side-Channel</span></td>
+                <td><span class="badge badge-green">Immune to All Detector Flaws</span></td>
+                <td>Closes all known and unknown detector side-channels simultaneously.</td>
+              </tr>
+              <tr>
+                <td><strong>Intercept-Resend Attack</strong></td>
+                <td><span class="badge badge-green">Detected (QBER ≈ 25%)</span></td>
+                <td><span class="badge badge-green">Detected (QBER ≈ 25%)</span></td>
+                <td>Wavefunction collapse on conjugate bases ({+, ×}) reveals channel interceptor.</td>
+              </tr>
+              <tr>
+                <td><strong>Network Scalability</strong></td>
+                <td>Point-to-Point (N² links required)</td>
+                <td>Star Network topology with untrusted central hub</td>
+                <td>N users require only 1 untrusted relay node to connect any Alice and Bob.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DISTANCE & LOSS ANALYTICS (0 to 100 km) -->
+    <div id="tab-distance-analytics" class="tab-content">
+      <div class="panel-card">
+        <h3 class="panel-title"><span>📊</span> Key Rate &amp; QBER vs. Fiber Distance (0 to 100 km)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Simulating transmission performance across standard telecom optical fiber (attenuation $\alpha = 0.2\text{ dB/km}$, dark count rate $p_{\text{dark}} = 10^{-5}$):
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 320px; gap: 20px;">
+          <div>
+            <canvas id="distanceCanvas" style="width: 100%; height: 340px; background: #0a0a0d; border-radius: 4px; border: 1px solid var(--border-hairline);"></canvas>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+              <span>0 km (0 dB Loss)</span>
+              <span>50 km (10 dB Loss)</span>
+              <span>100 km (20 dB Loss)</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div class="stat-box" style="text-align: left;">
+              <div class="stat-label">Fiber Attenuation Coefficient</div>
+              <div class="stat-num" style="font-size: 18px;">0.20 dB / km</div>
+              <span style="font-size: 11px; color: var(--text-muted);">Standard single-mode fiber (SMF-28) at 1550 nm</span>
+            </div>
+
+            <div class="stat-box" style="text-align: left;">
+              <div class="stat-label">BB84 Max Reach (Clean)</div>
+              <div class="stat-num" style="font-size: 18px; color: #38bdf8;">~80 - 90 km</div>
+              <span style="font-size: 11px; color: var(--text-muted);">Dark counts surpass signal photons above ~85 km</span>
+            </div>
+
+            <div class="stat-box" style="text-align: left;">
+              <div class="stat-label">BB84 Reach (Under Blinding)</div>
+              <div class="stat-num" style="font-size: 18px; color: #f87171;">0 km (Compromised)</div>
+              <span style="font-size: 11px; color: var(--text-muted);">Key compromised at all distances</span>
+            </div>
+
+            <div class="stat-box" style="text-align: left;">
+              <div class="stat-label">MDI-QKD Secure Reach</div>
+              <div class="stat-num" style="font-size: 18px; color: #34d399;">~70 - 85 km (Immune)</div>
+              <span style="font-size: 11px; color: var(--text-muted);">Maintains unconditional security against detector hacks</span>
+            </div>
+
+            <button id="btnRecalcDistance" class="btn btn-primary" style="margin-top: auto;">
+              <span>📈</span> Refresh Distance Curves
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- TAB 2: DUAL SCENARIO COMPARISON (Slide 5 & 7) -->
@@ -571,40 +757,48 @@ qc.measure(0, 0)</code></pre>
       </div>
     </div>
 
-    <!-- TAB 6: LITERATURE SURVEY & FOUNDATIONS (Slide 2, 3, 4, 8) -->
+    <!-- TAB 6: LITERATURE SURVEY & FOUNDATIONS (MDI-QKD + BB84) -->
     <div id="tab-literature" class="tab-content">
       <div class="panel-card">
-        <h3 class="panel-title"><span>📚</span> Literature Survey & Academic Foundations</h3>
+        <h3 class="panel-title"><span>📚</span> Literature Review: Foundations of MDI-QKD &amp; Attack Immunity</h3>
+        
+        <div style="background: rgba(226, 120, 56, 0.08); border-left: 3px solid var(--copper-glow); padding: 12px 16px; border-radius: 0 4px 4px 0; margin-bottom: 20px;">
+          <h4 style="color: var(--copper-glow); font-size: 13px; font-weight: 800; margin-bottom: 4px;">RESEARCH GAP IDENTIFIED (From Project Presentation)</h4>
+          <p style="font-size: 12px; color: #d4d4d8; line-height: 1.5;">
+            Existing literature largely optimizes MDI-QKD's key rate and distance in isolation — very few accessible simulation studies directly demonstrate, side-by-side, why the protocol is needed: <strong>a working detector-side attack (detector-blinding / time-shift) that breaks BB84's security assumption and is neutralized by MDI-QKD's untrusted-relay architecture</strong>. This project fills that gap with a reproducible, attack-vs-defense simulation.
+          </p>
+        </div>
+
         <div class="theory-grid">
           <div class="theory-card">
-            <h4>1. Bennett & Brassard (1984)</h4>
-            <p><strong>"Quantum Cryptography: Public Key Distribution and Coin Tossing"</strong>, Proc. IEEE Int. Conf. on Computers, Systems and Signal Processing.</p>
-            <p>The original seminal paper that introduced the BB84 protocol and conjugate photon bases $\{+, \times\}$.</p>
+            <h4>1. Li, W. &amp; Zhao, S. (2018)</h4>
+            <p><strong>"High-Dimensional Measurement-Device-Independent Quantum Key Distribution Based on Spatial Basis"</strong>, arXiv:1806.00560.</p>
+            <p>Proposes encoding qudits in spatial (position/momentum) degrees of freedom to push MDI-QKD's secret key rate closer to that of standard BB84, addressing historically low throughput.</p>
           </div>
           <div class="theory-card">
-            <h4>2. Shor & Preskill (2000)</h4>
-            <p><strong>"Simple Proof of Security of the BB84 Quantum Key Distribution Protocol"</strong>, Phys. Rev. Lett. 85, 441.</p>
-            <p>Provided the first rigorous, unconditional security proof for BB84 using Calderbank-Shor-Steane (CSS) quantum codes, establishing the 11.0% QBER bound.</p>
+            <h4>2. Ye, W., Zhong, H., Wu, X., Hu, L. &amp; Guo, Y. (2019)</h4>
+            <p><strong>"Continuous-Variable Measurement-Device-Independent QKD via Quantum Catalysis"</strong>, arXiv:1907.03383.</p>
+            <p>Uses zero-photon catalysis to extend achievable transmission distance and secret key rate of continuous-variable MDI-QKD, showing improved tolerance to detector imperfections.</p>
           </div>
           <div class="theory-card">
-            <h4>3. Gisin, Ribordy, Tittel & Zbinden (2002)</h4>
-            <p><strong>"Quantum Cryptography"</strong>, Reviews of Modern Physics 74, 145.</p>
-            <p>A comprehensive benchmark review covering BB84 theory, intercept-resend eavesdropping strategies, and experimental QKD implementations.</p>
+            <h4>3. Jing, F., Liu, W., Kong, L. &amp; He, C. (2021)</h4>
+            <p><strong>"Improving the Performance of CV-MDI-QKD via a Noiseless Linear Amplifier"</strong>, Entropy 23(12), 1691.</p>
+            <p>Adds a noiseless linear amplifier at the untrusted relay's detection stage, demonstrating gains in both communication distance and key rate under realistic channel excess noise.</p>
           </div>
           <div class="theory-card">
-            <h4>4. Mina & Simion (2020)</h4>
-            <p><strong>"A Scalable Simulation of the BB84 Protocol Involving Eavesdropping"</strong>, IACR ePrint 2020/1074.</p>
-            <p>Demonstrated Qiskit-based BB84 simulation of the intercept-resend attack and statistical eavesdropping estimation.</p>
+            <h4>4. Neumann, S. P. et al. (2021)</h4>
+            <p><strong>"Gigahertz Measurement-Device-Independent Quantum Key Distribution Using Directly Modulated Lasers"</strong>, npj Quantum Information 7, 121.</p>
+            <p>Demonstrates a practical, high-speed MDI-QKD system reaching secure key rates an order of magnitude above prior art, proving real-world feasibility at gigahertz clock rates.</p>
           </div>
           <div class="theory-card">
-            <h4>5. Lee, Lee & Lee (2023)</h4>
-            <p><strong>"Analysis on Eavesdropper Detection in BB84 QKD Protocol against Partial Intercept-and-Resend Attack"</strong>, IFIP ONDM 2023.</p>
-            <p>Analyzed QBER-threshold detection algorithms for noisy optical channels under partial interception fractions.</p>
+            <h4>5. Wang, Y. et al. (2025)</h4>
+            <p><strong>"Advances of Quantum Key Distribution and Network Nonlocality"</strong>, Review article, PMC12468356.</p>
+            <p>Surveys progress across CV-MDI-QKD, TF-QKD, and asynchronous MDI-QKD, positioning MDI protocols as the practical bridge between device-dependent QKD and full DI-QKD.</p>
           </div>
           <div class="theory-card">
-            <h4>6. QBER Analysis Review (2026)</h4>
-            <p><strong>"Quantum Bit Error Rate Analysis in BB84 QKD: Measurement, Statistical Estimation, and Eavesdropping Detection"</strong>, arXiv:2603.27278.</p>
-            <p>Confirms that QBER rises near-linearly with interception fraction, saturating at ~25% under full intercept-and-resend.</p>
+            <h4>6. Lo, H.-K., Curty, M. &amp; Qi, B. (2012) — Foundation</h4>
+            <p><strong>"Measurement-Device-Independent Quantum Key Distribution"</strong>, Phys. Rev. Lett. 108, 130503.</p>
+            <p>The landmark paper inventing MDI-QKD: proves that placing the measurement device at an untrusted relay completely eliminates all detector side-channel vulnerabilities.</p>
           </div>
         </div>
       </div>

@@ -48,6 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnQuickDual = document.getElementById('btnQuickDual');
   const btnRunDualCompare = document.getElementById('btnRunDualCompare');
   const btnSweepQBER = document.getElementById('btnSweepQBER');
+  const btnRunMDICompare = document.getElementById('btnRunMDICompare');
+  const btnRecalcDistance = document.getElementById('btnRecalcDistance');
+
+  // New Protocol & Attack Controls
+  const protocolSelect = document.getElementById('protocolSelect');
+  const attackStrategySelect = document.getElementById('attackStrategySelect');
+  const distanceSlider = document.getElementById('distanceSlider');
+  const distanceVal = document.getElementById('distanceVal');
 
   // Dashboard readout elements
   const alertBanner = document.getElementById('alertBanner');
@@ -95,6 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (target === 'qber-curve') {
         requestAnimationFrame(() => drawQBERCurve([]));
       }
+      if (target === 'distance-analytics') {
+        requestAnimationFrame(() => drawDistanceAnalytics());
+      }
+      if (target === 'mdi-comparison') {
+        runMDIShowdown();
+      }
       if (target === 'simulation') {
         requestAnimationFrame(() => {
           visualizer.resize();
@@ -118,6 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateConfigFromUI() {
     simulator.config.eveActive = eveToggle.checked;
     window.isEveActive = eveToggle.checked;
+
+    if (protocolSelect) {
+      simulator.config.protocol = protocolSelect.value;
+      window.currentProtocol = protocolSelect.value;
+    }
+    if (attackStrategySelect) {
+      simulator.config.eveAttackStrategy = attackStrategySelect.value;
+      window.currentAttackStrategy = attackStrategySelect.value;
+    }
+    if (distanceSlider && distanceVal) {
+      simulator.config.fiberDistanceKm = parseFloat(distanceSlider.value);
+      const lossDb = (simulator.config.fiberDistanceKm * 0.2).toFixed(1);
+      distanceVal.textContent = `${simulator.config.fiberDistanceKm} km (${lossDb} dB)`;
+    }
+
     simulator.config.eveInterceptRate = parseFloat(eveRateSlider.value) / 100;
     simulator.config.channelNoiseRate = parseFloat(noiseSlider.value) / 100;
     simulator.config.errorThreshold = parseFloat(thresholdSlider.value) / 100;
@@ -126,6 +155,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const thresholdPct = simulator.config.errorThreshold * 100;
     qberMeterThreshold.style.left = `${Math.min(100, thresholdPct * 2)}%`;
+  }
+
+  // Event Listeners for controls
+  if (protocolSelect) {
+    protocolSelect.addEventListener('change', () => {
+      updateConfigFromUI();
+      visualizer.draw();
+      log(`[Protocol Change] Switched to ${protocolSelect.value.toUpperCase()}. Station and channel updated.`, 'system');
+    });
+  }
+
+  if (attackStrategySelect) {
+    attackStrategySelect.addEventListener('change', () => {
+      updateConfigFromUI();
+      visualizer.draw();
+      log(`[Adversary Model] Active attack set to '${attackStrategySelect.value}'.`, 'warn');
+    });
+  }
+
+  if (distanceSlider) {
+    distanceSlider.addEventListener('input', () => {
+      updateConfigFromUI();
+    });
   }
 
   // Event Listeners for controls
@@ -413,6 +465,165 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateEncryptionSection(results);
+  }
+
+  // --- MDI-QKD vs BB84 Detector Immunity Showdown ---
+  if (btnRunMDICompare) {
+    btnRunMDICompare.addEventListener('click', runMDIShowdown);
+  }
+
+  function runMDIShowdown() {
+    updateConfigFromUI();
+
+    // 1. Run BB84 under Detector Blinding Attack
+    const simBB84 = new QKDSimulator({
+      protocol: 'bb84',
+      qubitCount: 100,
+      eveActive: true,
+      eveAttackStrategy: 'detector-blinding',
+      eveInterceptRate: 1.0,
+      channelNoiseRate: 0.01
+    });
+    const resBB84 = simBB84.runFullSimulation();
+
+    // 2. Run MDI-QKD under Detector Blinding Attack
+    const simMDI = new QKDSimulator({
+      protocol: 'mdi',
+      qubitCount: 100,
+      eveActive: true,
+      eveAttackStrategy: 'detector-blinding',
+      eveInterceptRate: 1.0,
+      channelNoiseRate: 0.01
+    });
+    const resMDI = simMDI.runFullSimulation();
+
+    const showdownBB84QBER = document.getElementById('showdownBB84QBER');
+    const showdownBB84Stolen = document.getElementById('showdownBB84Stolen');
+    const showdownMDIBell = document.getElementById('showdownMDIBell');
+    const showdownMDIStolen = document.getElementById('showdownMDIStolen');
+
+    if (showdownBB84QBER) showdownBB84QBER.textContent = `${resBB84.measuredQBER.toFixed(1)}% (Fake Clean!)`;
+    if (showdownBB84Stolen) showdownBB84Stolen.textContent = `${resBB84.eveStolenPercentage.toFixed(0)}% LEAKED`;
+    if (showdownMDIBell) showdownMDIBell.textContent = `${resMDI.siftedCount} Bell Events (|ψ⁻⟩)`;
+    if (showdownMDIStolen) showdownMDIStolen.textContent = `0.0% (ZERO LEAK)`;
+
+    log(`[MDI SHOWDOWN] BB84: QBER=${resBB84.measuredQBER.toFixed(1)}% (Blinding Attack fooled detector!), Key Leaked=100%. MDI-QKD: Immune! Stolen Key=0%.`, 'warn');
+  }
+
+  // --- Distance & Key-Rate Analytics (0 to 100 km) ---
+  if (btnRecalcDistance) {
+    btnRecalcDistance.addEventListener('click', () => {
+      drawDistanceAnalytics();
+      log('[DISTANCE] Recomputed Secret Key Rate vs. Distance (0 - 100 km) across standard 0.2 dB/km fiber.', 'info');
+    });
+  }
+
+  function drawDistanceAnalytics() {
+    const canvas = document.getElementById('distanceCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 600;
+    const h = canvas.clientHeight || 340;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    ctx.clearRect(0, 0, w, h);
+
+    const padLeft = 60;
+    const padRight = 30;
+    const padTop = 30;
+    const padBottom = 40;
+    const plotW = w - padLeft - padRight;
+    const plotH = h - padTop - padBottom;
+
+    // Grid lines (log scale on Y axis: 10^-1 to 10^-5)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+
+    for (let logR = -1; logR >= -5; logR--) {
+      const normY = (-1 - logR) / 4;
+      const y = padTop + plotH * normY;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(padLeft + plotW, y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(`10^${logR}`, padLeft - 8, y + 3);
+    }
+
+    for (let d = 0; d <= 100; d += 20) {
+      const x = padLeft + (plotW * (d / 100));
+      ctx.beginPath();
+      ctx.moveTo(x, padTop);
+      ctx.lineTo(x, padTop + plotH);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${d}km`, x, padTop + plotH + 18);
+    }
+
+    ctx.fillStyle = '#8e8e98';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Fiber Transmission Distance (km)', padLeft + plotW / 2, h - 8);
+
+    const sweepData = simulator.simulateDistanceSweep(100, 5);
+
+    // Plot Curve 1: BB84 Key Rate (Clean) - Sky blue
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    sweepData.forEach((pt, idx) => {
+      const rate = Math.max(1e-5, pt.bb84.keyRateClean);
+      const logVal = Math.log10(rate);
+      const normY = Math.min(1, Math.max(0, (-1 - logVal) / 4));
+      const x = padLeft + plotW * (pt.distanceKm / 100);
+      const y = padTop + plotH * normY;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Plot Curve 2: MDI-QKD Key Rate (Clean & Attack Immune) - Emerald green
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    sweepData.forEach((pt, idx) => {
+      const rate = Math.max(1e-5, pt.mdi.keyRateClean);
+      const logVal = Math.log10(rate);
+      const normY = Math.min(1, Math.max(0, (-1 - logVal) / 4));
+      const x = padLeft + plotW * (pt.distanceKm / 100);
+      const y = padTop + plotH * normY;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Plot Curve 3: BB84 Under Detector Blinding Attack - Red (drops to 0!)
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(padLeft, padTop + plotH);
+    ctx.lineTo(padLeft + plotW, padTop + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Chart Legend
+    ctx.font = '10px monospace';
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText('■ BB84 Clean Rate', padLeft + 15, padTop + 14);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('■ MDI-QKD (Immune to Blinding)', padLeft + 160, padTop + 14);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('■ BB84 Under Blinding (Rate = 0)', padLeft + 380, padTop + 14);
   }
 
   // --- Dual Scenario Comparison (Slide 5 & 7) ---

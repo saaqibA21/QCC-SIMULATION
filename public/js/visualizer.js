@@ -73,12 +73,53 @@
 
     /**
      * Dispatch an animated photon flight across the channel
+     * Supports both BB84 single flight and MDI-QKD dual-flight to central relay
      */
     launchPhoton(stepData, speed = 1.0, onComplete = null) {
+      const centerY = this.height / 2;
+
+      if (stepData.protocol === 'mdi') {
+        // MDI-QKD Dual Photon Flight:
+        // Alice photon travels left-to-right to Charlie
+        // Bob photon travels right-to-left to Charlie
+        const startAliceX = this.stations.alice.x + 54;
+        const startBobX = this.stations.bob.x - 54;
+        const targetCharlieX = this.stations.eve.x;
+
+        const photonA = {
+          x: startAliceX,
+          y: centerY,
+          startX: startAliceX,
+          speed: 4.5 * speed,
+          targetX: targetCharlieX,
+          stage: 'flying_to_charlie',
+          stepData: stepData,
+          color: this.getStateColor(stepData.aliceBasis === '+' ? (stepData.aliceBit === 0 ? 0 : 90) : (stepData.aliceBit === 0 ? 45 : 135)),
+          label: stepData.aliceState
+        };
+
+        const photonB = {
+          x: startBobX,
+          y: centerY,
+          startX: startBobX,
+          speed: -4.5 * speed,
+          targetX: targetCharlieX,
+          stage: 'flying_to_charlie',
+          stepData: stepData,
+          color: this.getStateColor(stepData.bobBasis === '+' ? (stepData.bobBit === 0 ? 0 : 90) : (stepData.bobBit === 0 ? 45 : 135)),
+          label: stepData.bobState,
+          isBobPhoton: true,
+          onComplete: onComplete
+        };
+
+        this.activePhotons.push(photonA, photonB);
+        return;
+      }
+
+      // Standard BB84 Single Photon Flight
       const startX = this.stations.alice.x + 54;
       const targetEveX = this.stations.eve.x;
       const targetBobX = this.stations.bob.x - 54;
-      const centerY = this.height / 2;
 
       const photon = {
         x: startX,
@@ -94,6 +135,7 @@
         eveWaitTicks: 0,
         bobWaitTicks: 0,
         color: this.getStateColor(stepData.aliceAngle),
+        label: stepData.aliceState,
         onComplete: onComplete
       };
 
@@ -142,6 +184,22 @@
       for (let i = this.activePhotons.length - 1; i >= 0; i--) {
         const ph = this.activePhotons[i];
         ph.phase += 0.15;
+
+        // MDI-QKD Inward Flight to Charlie
+        if (ph.stage === 'flying_to_charlie') {
+          ph.x += ph.speed;
+          const reachedTarget = ph.speed > 0 ? (ph.x >= ph.targetX) : (ph.x <= ph.targetX);
+          if (reachedTarget) {
+            ph.stage = 'done';
+            const sparkColor = ph.stepData.bellStateDetected ? '#34d399' : '#f59e0b';
+            this.createSparks(ph.targetX, ph.y, sparkColor, 18);
+            if (ph.isBobPhoton && ph.onComplete) {
+              ph.onComplete(ph.stepData);
+            }
+            this.activePhotons.splice(i, 1);
+          }
+          continue;
+        }
 
         if (ph.stage === 'alice_to_eve') {
           if (ph.stepData.eveIntercepted) {
@@ -283,11 +341,18 @@
       ctx.stroke();
 
       // Channel description caption comfortably above line
+      const isMDI = window.currentProtocol === 'mdi';
       ctx.fillStyle = '#fed7aa';
       ctx.font = '700 12px monospace';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '1px';
-      ctx.fillText('QUBITS TRAVEL THROUGH QUANTUM OPTICAL FIBER CHANNEL', (startX + endX) / 2, centerY - 38);
+      ctx.fillText(
+        isMDI 
+          ? 'MDI-QKD: ALICE & BOB TRANSMIT INWARD TO UNTRUSTED BSM RELAY' 
+          : 'QUBITS TRAVEL THROUGH QUANTUM OPTICAL FIBER CHANNEL', 
+        (startX + endX) / 2, 
+        centerY - 38
+      );
 
       ctx.restore();
     }
@@ -334,30 +399,62 @@
     drawEveStation() {
       const ctx = this.ctx;
       const { x, y } = this.stations.eve;
+      const isMDI = window.currentProtocol === 'mdi';
       const isActive = window.isEveActive !== undefined ? window.isEveActive : true;
+      const isBlinding = window.currentAttackStrategy === 'detector-blinding';
 
       ctx.save();
-      if (isActive) {
+      if (isMDI) {
+        // CHARLIE: Untrusted Relay in MDI-QKD
+        ctx.beginPath();
+        ctx.arc(x, y, 66, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(x, y, 52, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e1c18';
+        ctx.fill();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fed7aa';
+        ctx.font = '900 34px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('C', x, y);
+
+        ctx.font = '800 15px system-ui, sans-serif';
+        ctx.fillStyle = '#fed7aa';
+        ctx.fillText('CHARLIE', x, y + 76);
+        ctx.font = '600 11px system-ui, sans-serif';
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('Untrusted BSM Relay', x, y + 94);
+        ctx.fillStyle = '#34d399';
+        ctx.fillText('Immune to Detector Blinding', x, y + 108);
+      } else if (isActive) {
         // Pulsing warm copper-amber warning aura
         const time = Date.now() * 0.003;
         const pulseR = 66 + Math.sin(time) * 5;
         ctx.beginPath();
         ctx.arc(x, y, pulseR, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(226, 120, 56, 0.6)';
+        ctx.strokeStyle = isBlinding ? 'rgba(239, 68, 68, 0.7)' : 'rgba(226, 120, 56, 0.6)';
         ctx.lineWidth = 3;
         ctx.stroke();
 
         // Inner circular node
         ctx.beginPath();
         ctx.arc(x, y, 52, 0, Math.PI * 2);
-        ctx.fillStyle = '#26140d';
+        ctx.fillStyle = isBlinding ? '#3b1010' : '#26140d';
         ctx.fill();
-        ctx.strokeStyle = '#e27838';
+        ctx.strokeStyle = isBlinding ? '#ef4444' : '#e27838';
         ctx.lineWidth = 3;
         ctx.stroke();
 
         // Node Letter "E"
-        ctx.fillStyle = '#fb923c';
+        ctx.fillStyle = isBlinding ? '#f87171' : '#fb923c';
         ctx.font = '900 34px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -365,11 +462,11 @@
 
         // Label below
         ctx.font = '800 15px system-ui, sans-serif';
-        ctx.fillStyle = '#fb923c';
+        ctx.fillStyle = isBlinding ? '#f87171' : '#fb923c';
         ctx.fillText('EVE', x, y + 76);
         ctx.font = '600 11px system-ui, sans-serif';
-        ctx.fillStyle = '#fed7aa';
-        ctx.fillText('Intercept & Resend', x, y + 94);
+        ctx.fillStyle = isBlinding ? '#fca5a5' : '#fed7aa';
+        ctx.fillText(isBlinding ? 'Detector-Blinding Attack' : 'Intercept & Resend', x, y + 94);
       } else {
         // Inactive / Bypassed Eve
         ctx.beginPath();

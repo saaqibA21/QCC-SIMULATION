@@ -86,14 +86,18 @@
   class QKDSimulator {
     constructor(config = {}) {
       this.config = {
+        protocol: config.protocol || 'bb84', // 'bb84' or 'mdi'
         qubitCount: config.qubitCount || 50,
         eveActive: config.eveActive !== undefined ? config.eveActive : true,
-        eveAttackStrategy: config.eveAttackStrategy || 'intercept-resend', // 'intercept-resend', 'probabilistic', 'pns'
+        eveAttackStrategy: config.eveAttackStrategy || 'intercept-resend', // 'intercept-resend', 'detector-blinding', 'probabilistic'
         eveInterceptRate: config.eveInterceptRate !== undefined ? config.eveInterceptRate : 1.0, // 0.0 to 1.0
-        channelNoiseRate: config.channelNoiseRate !== undefined ? config.channelNoiseRate : 0.0, // Environmental noise
+        channelNoiseRate: config.channelNoiseRate !== undefined ? config.channelNoiseRate : 0.02, // Environmental noise
         errorThreshold: config.errorThreshold !== undefined ? config.errorThreshold : 0.11, // 11% BB84 Shor-Preskill limit
-        sampleFraction: config.sampleFraction !== undefined ? config.sampleFraction : 0.30, // 30% sample for QBER estimation
+        sampleFraction: config.sampleFraction !== undefined ? config.sampleFraction : 0.33, // 33% sample for QBER estimation
         useDecoyState: config.useDecoyState || false,
+        fiberDistanceKm: config.fiberDistanceKm || 20, // 0 to 100 km
+        fiberAttenuationDbPerKm: 0.2, // standard telecom fiber at 1550 nm
+        darkCountRate: 1e-5,
         ...config
       };
 
@@ -136,14 +140,26 @@
 
     /**
      * Simulate a single transmission step (for step-by-step visual mode)
+     * Handles both BB84 baseline and MDI-QKD (Untrusted Relay) protocols,
+     * including Intercept-Resend and Detector-Blinding attacks.
      */
     simulateSingleStep() {
-      // 1. Alice prepares
+      if (this.config.protocol === 'mdi') {
+        return this.simulateSingleStepMDI();
+      }
+      return this.simulateSingleStepBB84();
+    }
+
+    /**
+     * BB84 Single Step Simulation
+     */
+    simulateSingleStepBB84() {
       const aliceBit = Math.random() < 0.5 ? 0 : 1;
       const aliceBasis = Math.random() < 0.5 ? BASIS.RECTILINEAR : BASIS.DIAGONAL;
       const photon = new Photon(aliceBit, aliceBasis);
 
       const stepRecord = {
+        protocol: 'bb84',
         aliceBit,
         aliceBasis,
         aliceState: photon.stateLabel,
@@ -152,69 +168,176 @@
         eveBasis: null,
         eveMeasuredBit: null,
         eveGuessedCorrectBasis: false,
-        bobBasis: null,
+        attackType: this.config.eveActive ? this.config.eveAttackStrategy : 'none',
+        detectorBlinded: false,
+        bobBasis: Math.random() < 0.5 ? BASIS.RECTILINEAR : BASIS.DIAGONAL,
         bobMeasuredBit: null,
+        bobDetectedClick: true,
         basisMatched: false,
         sifted: false,
         isSampledForErrorCheck: false,
         hasError: false,
+        eveKnownBit: null,
         explanation: ''
       };
 
       let transmittedPhoton = photon.clone();
 
-      // 2. Eve intercepts if enabled
       if (this.config.eveActive) {
-        const willIntercept = Math.random() < this.config.eveInterceptRate;
-        if (willIntercept) {
-          stepRecord.eveIntercepted = true;
+        stepRecord.eveIntercepted = Math.random() < this.config.eveInterceptRate;
+
+        if (stepRecord.eveIntercepted) {
           stepRecord.eveBasis = Math.random() < 0.5 ? BASIS.RECTILINEAR : BASIS.DIAGONAL;
           stepRecord.eveGuessedCorrectBasis = (stepRecord.eveBasis === aliceBasis);
-          
-          // Eve measures the quantum state
-          stepRecord.eveMeasuredBit = transmittedPhoton.measure(stepRecord.eveBasis);
 
-          // By No-Cloning Theorem & Heisenberg Uncertainty:
-          // Transmitted photon has now collapsed to Eve's measurement state!
-          // Eve prepares a new photon in her collapsed state and sends to Bob:
-          transmittedPhoton = new Photon(stepRecord.eveMeasuredBit, stepRecord.eveBasis);
+          if (this.config.eveAttackStrategy === 'detector-blinding') {
+            // DETECTOR-BLINDING ATTACK (Lydersen et al. 2010):
+            // Eve blinds Bob's SPADs with CW illumination and triggers with bright tailored pulses
+            stepRecord.detectorBlinded = true;
+            stepRecord.eveMeasuredBit = transmittedPhoton.measure(stepRecord.eveBasis);
+            stepRecord.eveKnownBit = stepRecord.eveMeasuredBit;
+
+            // If Bob's basis matches Eve's basis, pulse enters single detector -> triggers click!
+            // If Bob's basis differs, pulse splits 50:50 below threshold -> NO CLICK!
+            if (stepRecord.bobBasis === stepRecord.eveBasis) {
+              stepRecord.bobDetectedClick = true;
+              stepRecord.bobMeasuredBit = stepRecord.eveMeasuredBit;
+            } else {
+              stepRecord.bobDetectedClick = false; // Filtered out by blinding threshold!
+              stepRecord.bobMeasuredBit = null;
+            }
+          } else {
+            // Standard Intercept-and-Resend Attack:
+            stepRecord.eveMeasuredBit = transmittedPhoton.measure(stepRecord.eveBasis);
+            stepRecord.eveKnownBit = stepRecord.eveGuessedCorrectBasis ? stepRecord.eveMeasuredBit : null;
+            transmittedPhoton = new Photon(stepRecord.eveMeasuredBit, stepRecord.eveBasis);
+          }
         }
       }
 
-      // 3. Environmental channel noise (e.g. fiber birefringence)
-      if (Math.random() < this.config.channelNoiseRate) {
-        // Random bit flip on channel
-        transmittedPhoton.bit = 1 - transmittedPhoton.bit;
+      // If detector blinding didn't suppress the click, measure Bob
+      if (this.config.eveAttackStrategy !== 'detector-blinding' || !stepRecord.detectorBlinded) {
+        if (Math.random() < this.config.channelNoiseRate) {
+          transmittedPhoton.bit = 1 - transmittedPhoton.bit;
+        }
+        stepRecord.bobMeasuredBit = transmittedPhoton.measure(stepRecord.bobBasis);
       }
 
-      // 4. Bob measures with random basis
-      stepRecord.bobBasis = Math.random() < 0.5 ? BASIS.RECTILINEAR : BASIS.DIAGONAL;
-      stepRecord.bobMeasuredBit = transmittedPhoton.measure(stepRecord.bobBasis);
-
-      // 5. Sifting comparison (Alice & Bob compare bases publicly)
+      // Sifting logic
       stepRecord.basisMatched = (aliceBasis === stepRecord.bobBasis);
-      stepRecord.sifted = stepRecord.basisMatched;
+      stepRecord.sifted = stepRecord.basisMatched && stepRecord.bobDetectedClick;
 
-      if (stepRecord.basisMatched) {
+      if (stepRecord.sifted) {
         stepRecord.hasError = (aliceBit !== stepRecord.bobMeasuredBit);
       }
 
-      // Explain what happened physically
-      if (!stepRecord.eveIntercepted) {
-        if (stepRecord.basisMatched) {
-          stepRecord.explanation = stepRecord.hasError 
-            ? 'Channel noise flipped Bob\'s bit even though bases matched.' 
-            : 'Clean transmission! Alice and Bob matched bases; bit is identical.';
+      // Explanations
+      if (stepRecord.detectorBlinded) {
+        if (stepRecord.bobDetectedClick) {
+          stepRecord.explanation = `🚨 DETECTOR BLINDED! Eve forced Bob's detector to click on bit ${stepRecord.bobMeasuredBit}. QBER stays 0% while Eve extracts key undetected!`;
         } else {
-          stepRecord.explanation = 'Bases did not match (+ vs x). Discarded during sifting.';
+          stepRecord.explanation = `Detector Blinding: Bob measured in basis '${stepRecord.bobBasis}' != Eve's '${stepRecord.eveBasis}'. Pulse split below threshold -> No click.`;
+        }
+      } else if (!stepRecord.eveIntercepted) {
+        stepRecord.explanation = stepRecord.sifted 
+          ? (stepRecord.hasError ? 'Channel noise caused bit flip.' : 'Clean BB84 transmission. Bases match; bit identical.')
+          : 'Bases mismatched (+ vs x). Discarded in sifting.';
+      } else {
+        stepRecord.explanation = stepRecord.eveGuessedCorrectBasis
+          ? `Eve guessed basis '${stepRecord.eveBasis}' correctly. State undisturbed.`
+          : `Eve guessed wrong basis (${stepRecord.eveBasis} vs ${aliceBasis}). Wavefunction collapsed -> induces ~25% QBER!`;
+      }
+
+      return stepRecord;
+    }
+
+    /**
+     * MDI-QKD Single Step Simulation (Lo, Curty, Qi 2012)
+     * Alice and Bob prepare states independently -> Charlie Untrusted Relay performs BSM
+     */
+    simulateSingleStepMDI() {
+      const aliceBit = Math.random() < 0.5 ? 0 : 1;
+      const aliceBasis = Math.random() < 0.5 ? BASIS.RECTILINEAR : BASIS.DIAGONAL;
+      const photonA = new Photon(aliceBit, aliceBasis);
+
+      const bobBit = Math.random() < 0.5 ? 0 : 1;
+      const bobBasis = Math.random() < 0.5 ? BASIS.RECTILINEAR : BASIS.DIAGONAL;
+      const photonB = new Photon(bobBit, bobBasis);
+
+      const stepRecord = {
+        protocol: 'mdi',
+        aliceBit,
+        aliceBasis,
+        aliceState: photonA.stateLabel,
+        bobBit,
+        bobBasis,
+        bobState: photonB.stateLabel,
+        relayState: 'BSM Relay (Charlie)',
+        charlieOutcome: null, // '|psi-⟩', '|psi+⟩', 'failed'
+        bellStateDetected: false,
+        attackType: this.config.eveActive ? this.config.eveAttackStrategy : 'none',
+        eveIntercepted: this.config.eveActive,
+        basisMatched: false,
+        sifted: false,
+        hasError: false,
+        bobFlippedBit: null,
+        explanation: ''
+      };
+
+      // Charlie Bell-State Measurement (Hong-Ou-Mandel Interference)
+      const basesMatch = (aliceBasis === bobBasis);
+      stepRecord.basisMatched = basesMatch;
+
+      // Hong-Ou-Mandel interference condition:
+      // When bases match, |psi-⟩ = (|01⟩ - |10⟩)/sqrt(2) triggers coincidences in orthogonal detectors
+      if (basesMatch) {
+        if (aliceBit !== bobBit) {
+          // Anti-symmetric spatial state -> photons exit different ports -> |psi-⟩ coincidence!
+          // Success probability with 50:50 beam splitter = 50%
+          const channelLoss = Math.pow(10, -(this.config.fiberDistanceKm / 2 * this.config.fiberAttenuationDbPerKm) / 10);
+          const successProb = 0.5 * channelLoss;
+
+          if (Math.random() < 0.5) {
+            stepRecord.charlieOutcome = '|ψ⁻⟩';
+            stepRecord.bellStateDetected = true;
+          } else {
+            stepRecord.charlieOutcome = 'No Coincidence';
+          }
+        } else {
+          // Symmetric spatial state (00 or 11) -> photons bunch into same port -> no |psi-⟩ coincidence
+          stepRecord.charlieOutcome = 'Bunches (No |ψ⁻⟩)';
         }
       } else {
-        if (stepRecord.eveGuessedCorrectBasis) {
-          stepRecord.explanation = `Eve guessed Alice's basis correctly (${stepRecord.eveBasis}). State was not rotated, but Eve holds a copy of this bit.`;
-        } else {
-          stepRecord.explanation = `Eve guessed wrong basis (${stepRecord.eveBasis} vs ${aliceBasis})! Quantum state collapsed and rotated. When Bob measured, this induced quantum noise!`;
+        // Mismatched bases: random coincidence 25%
+        stepRecord.charlieOutcome = Math.random() < 0.25 ? '|ψ⁻⟩ (Mismatched)' : 'No Coincidence';
+      }
+
+      // Sifting: Kept if bases match AND Charlie announced successful |psi-⟩ projection!
+      if (basesMatch && stepRecord.bellStateDetected) {
+        stepRecord.sifted = true;
+        // In |psi-⟩, bits are anti-correlated: a != b. Bob flips bit to correlate with Alice:
+        stepRecord.bobFlippedBit = 1 - bobBit;
+        stepRecord.hasError = (aliceBit !== stepRecord.bobFlippedBit);
+
+        // Environmental noise on MDI channel
+        if (Math.random() < this.config.channelNoiseRate) {
+          stepRecord.hasError = true;
         }
       }
+
+      // Explanations for MDI-QKD & Detector-Attack Immunity:
+      if (this.config.eveActive && this.config.eveAttackStrategy === 'detector-blinding') {
+        stepRecord.explanation = `🛡️ MDI-QKD IMMUNITY: Eve blinded Charlie's detectors, but Charlie only outputs Bell-state parity (|ψ⁻⟩). Eve learns ZERO key bits! Alice & Bob's keys remain 100% secure.`;
+      } else if (stepRecord.sifted) {
+        stepRecord.explanation = `MDI-QKD Success: Charlie projected onto |ψ⁻⟩. Alice & Bob matched bases (${aliceBasis}). Bob flipped bit ${bobBit} -> ${stepRecord.bobFlippedBit} to match Alice.`;
+      } else if (!basesMatch) {
+        stepRecord.explanation = `MDI-QKD Sift: Bases mismatched (Alice: ${aliceBasis}, Bob: ${bobBasis}). Discarded.`;
+      } else {
+        stepRecord.explanation = `MDI-QKD Relay: Charlie recorded no Bell coincidence. Discarded.`;
+      }
+
+      // Legacy compatibility fields
+      stepRecord.bobMeasuredBit = stepRecord.bobFlippedBit !== null ? stepRecord.bobFlippedBit : bobBit;
 
       return stepRecord;
     }
@@ -316,29 +439,79 @@
       const theoreticalQBER = eveActive ? (0.25 * eveInterceptRate) : this.config.channelNoiseRate;
       const eveInterceptedCount = steps.filter(s => s.eveIntercepted).length;
 
+      // Check security compromise under detector blinding
+      const isBlindingAttack = this.config.eveActive && this.config.eveAttackStrategy === 'detector-blinding';
+      const isCatastrophicBreach = (this.config.protocol === 'bb84' && isBlindingAttack);
+
       this.results = {
+        protocol: this.config.protocol,
+        attackStrategy: this.config.eveAttackStrategy,
         totalQubits: qubitCount,
         siftedCount: siftedIndices.length,
         siftedRatio: (siftedIndices.length / qubitCount) * 100,
         sampleTestedCount: totalTested,
         sampleErrorsFound: testErrors,
-        measuredQBER: qber * 100, // as percentage
+        measuredQBER: qber * 100,
         theoreticalQBER: theoreticalQBER * 100,
         errorThresholdPercent: errorThreshold * 100,
         isEavesdropperDetected,
         isProtocolAborted,
+        isCatastrophicBreach,
         eveInterceptedCount,
         eveInterceptPercentage: (eveInterceptedCount / qubitCount) * 100,
         aliceFinalKey,
         bobFinalKey,
         amplifiedAliceKey,
         amplifiedBobKey,
-        eveKnownBitsBeforeAmp: eveKnownBits,
+        eveKnownBitsBeforeAmp: isCatastrophicBreach ? aliceFinalKey.length : eveKnownBits,
+        eveStolenPercentage: isCatastrophicBreach ? 100 : (aliceFinalKey.length > 0 ? (eveKnownBits / aliceFinalKey.length) * 100 : 0),
         privacyCompressionRatio,
         steps
       };
 
       return this.results;
+    }
+
+    /**
+     * Distance Sweep Simulation (0 to 100 km)
+     * Compares BB84 vs MDI-QKD secret key rate & QBER across fiber loss
+     */
+    simulateDistanceSweep(maxDistance = 100, stepKm = 10) {
+      const data = [];
+      const alpha = this.config.fiberAttenuationDbPerKm || 0.2; // 0.2 dB/km
+      const pDark = this.config.darkCountRate || 1e-5;
+      const eOpt = this.config.channelNoiseRate || 0.015;
+
+      for (let L = 0; L <= maxDistance; L += stepKm) {
+        const T_link = Math.pow(10, -(alpha * L) / 10);
+        
+        // BB84:
+        const qberBB84 = Math.min(0.5, (eOpt * T_link + 0.5 * pDark) / (T_link + pDark));
+        const rateBB84Clean = Math.max(0, 0.5 * T_link * (1 - 2 * this.binaryEntropy(qberBB84)));
+
+        // MDI-QKD:
+        const qberMDI = Math.min(0.5, (eOpt * T_link + pDark) / (T_link + 2 * pDark));
+        const rateMDIClean = Math.max(0, 0.25 * T_link * (1 - 2 * this.binaryEntropy(qberMDI)));
+
+        data.push({
+          distanceKm: L,
+          lossDb: (alpha * L).toFixed(1),
+          transmittance: T_link,
+          bb84: {
+            qber: qberBB84 * 100,
+            keyRateClean: rateBB84Clean,
+            keyRateBlinded: 0.0,
+            isCompromisedByBlinding: true
+          },
+          mdi: {
+            qber: qberMDI * 100,
+            keyRateClean: rateMDIClean,
+            keyRateBlinded: rateMDIClean,
+            isCompromisedByBlinding: false
+          }
+        });
+      }
+      return data;
     }
 
     /**

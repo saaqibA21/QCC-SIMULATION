@@ -1,6 +1,7 @@
-# ⚛️ QuantumShield: Quantum Communication & Eavesdropping Simulator
+# ⚛️ QuantumShield: MDI-QKD & BB84 Quantum Communication Simulator
+### Measurement-Device-Independent QKD: Detector-Attack Immunity vs Standard QKD
 
-An interactive, high-fidelity quantum cryptography simulator demonstrating **Quantum Key Distribution (BB84 protocol)**, the physics of **quantum measurement collapse**, eavesdropping attacks by **Eve (Intercept-Resend & PNS attacks)**, and how quantum mechanics **detects and prevents** eavesdropping with mathematical certainty.
+An interactive, high-fidelity quantum cryptography simulator demonstrating **Standard BB84 QKD** alongside **Measurement-Device-Independent Quantum Key Distribution (MDI-QKD)**, the physics of **quantum measurement collapse**, eavesdropping attacks (**Intercept-Resend & Detector-Blinding attacks**), and how MDI-QKD **removes all detector trust** to achieve immunity against hardware side-channel attacks.
 
 ---
 
@@ -18,15 +19,46 @@ Then open your browser at **[http://localhost:3000](http://localhost:3000)**.
 
 ### 2. Command Line Interface (CLI Simulator)
 ```bash
+# Run MDI-QKD vs BB84 Detector-Blinding Attack Showdown:
+node qkd_cli.js --mdi-showdown
+
 # Run with Eve eavesdropping active (will trigger breach detection & protocol abort):
 node qkd_cli.js --qubits=60 --eve=true
 
 # Run clean channel (channel secure, key distilled, OTP message encrypted):
 node qkd_cli.js --qubits=60 --eve=false
 
-# Custom parameters:
-node qkd_cli.js --qubits=100 --eve=true --intercept=0.4 --noise=0.01 --threshold=0.11
+# Run dual scenario comparison:
+node qkd_cli.js --dual --qubits=100
 ```
+
+---
+
+## 🛡️ MDI-QKD: Closing the Detector Side-Channel Loophole
+
+### 1. The Real-World Hardware Problem (Detector-Blinding Attack)
+Standard QKD protocols (such as BB84) assume Alice's and Bob's detectors behave as ideal mathematical operators. However, in practice, **Single-Photon Avalanche Photodiodes (SPADs)** can be blinded:
+* **The Attack (Lydersen et al. 2010):** Eve uses continuous-wave (CW) illumination to force Bob's SPADs into linear photodiode regime.
+* Eve intercepts Alice's photon, measures in basis $B_E$, and sends a tailored bright optical pulse.
+* Bob's blinded detector triggers **only if Bob's basis matches Eve's basis**. If Bob's basis differs, the pulse energy splits 50:50 below threshold, producing **no click**.
+* **Fatal Result in BB84:** Eve learns **100% of the sifted key bits**, yet Bob's measured QBER remains **0.0%**! Standard QBER checks are completely bypassed.
+
+### 2. The MDI-QKD Solution (Lo, Curty, Qi 2012)
+MDI-QKD completely removes trust from the measurement device:
+1. **Transmitters Only:** Alice and Bob prepare states independently ($|\psi_A\rangle, |\psi_B\rangle \in \{|0\rangle, |1\rangle, |+\rangle, |-\rangle\}$) and send them through optical fibers to an **untrusted central relay (Charlie)**.
+2. **Bell-State Measurement (BSM):** Charlie performs a two-photon interference measurement (BSM) via a 50:50 beam splitter and announces when a Bell state projection occurs (e.g. $|\psi^-\rangle = \frac{1}{\sqrt{2}}(|01\rangle - |10\rangle)$).
+3. **Parity Announcement:** The announcement reveals **only the mutual parity ($a \oplus b = 1$)**, leaking **zero information** about whether Alice sent `0` or `1`.
+4. **Detector Immunity:** Even if Charlie is Eve herself, or if Eve controls and blinds all detectors at the relay, she cannot learn the key! All detector side-channel attacks are neutralized.
+
+---
+
+## 🔬 Literature Survey & References
+1. **Li, W. & Zhao, S. (2018)** — *High-Dimensional Measurement-Device-Independent QKD Based on Spatial Basis*, arXiv:1806.00560.
+2. **Ye, W. et al. (2019)** — *Continuous-Variable MDI-QKD via Quantum Catalysis*, arXiv:1907.03383.
+3. **Jing, F. et al. (2021)** — *Improving Performance of CV-MDI-QKD via Noiseless Linear Amplifier*, Entropy 23(12), 1691.
+4. **Neumann, S. P. et al. (2021)** — *Gigahertz MDI-QKD Using Directly Modulated Lasers*, npj Quantum Information 7, 121.
+5. **Wang, Y. et al. (2025)** — *Advances of Quantum Key Distribution and Network Nonlocality*, Review article, PMC12468356.
+6. **Lo, H.-K., Curty, M. & Qi, B. (2012)** — *Measurement-Device-Independent Quantum Key Distribution*, Phys. Rev. Lett. 108, 130503.
 
 ---
 
