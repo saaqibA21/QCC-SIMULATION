@@ -51,7 +51,7 @@ const GRAY = '\x1b[90m';
 console.log(`${BOLD}${CYAN}========================================================================${RESET}`);
 console.log(`${BOLD}${CYAN}⚛️  ACADEMIC PROJECT: SIMULATION OF EAVESDROPPING DETECTION IN BB84${RESET}`);
 console.log(`${BOLD}${CYAN}    Quantum Key Distribution Protocol & QBER Analysis${RESET}`);
-console.log(`${BOLD}${GRAY}    Authors: Saad Akther Khan (RA2311026011046) & Mohammed Saaqib (RA2311026011029)${RESET}`);
+console.log(`${BOLD}${GRAY}    QUANTUM CORE SIMULATION SUITE // MDI-QKD & BB84${RESET}`);
 console.log(`${BOLD}${CYAN}========================================================================${RESET}`);
 console.log(`${GRAY}Parameters:${RESET}`);
 console.log(`  • Qubits sent: ${BOLD}${options.qubits}${RESET}`);

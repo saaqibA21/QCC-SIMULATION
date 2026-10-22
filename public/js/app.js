@@ -1,7 +1,7 @@
 /**
  * QuantumShield App Controller - Presentation Edition
  * Academic Project: Simulation of Eavesdropping Detection in BB84
- * Authors: Saad Akther Khan (RA2311026011046) & Mohammed Saaqib (RA2311026011029)
+ * Quantum Key Distribution & Eavesdropping Detection Suite
  */
 
 document.addEventListener('DOMContentLoaded', () => {
