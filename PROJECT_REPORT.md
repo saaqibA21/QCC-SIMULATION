@@ -9,7 +9,7 @@
 *Submitted by*
 
 ### **MOHAMMED SAAQIB [RA2311026011029]**  
-### **SAAD AKTHAR KHAN [RA2311026011043]**  
+### **SAAD AKTHER KHAN [RA2311026011046]**  
 ### **ASHWATH SAI [RA2311026011081]**  
 
 *Under the Guidance of*
@@ -61,11 +61,11 @@ This sheet must be filled in (each box ticked to show that the condition has bee
 - **Degree / Course:** Bachelor of Technology in Computer Science and Engineering
 - **Student Names:** 
   1. MOHAMMED SAAQIB
-  2. SAAD AKTHAR KHAN
+  2. SAAD AKTHER KHAN
   3. ASHWATH SAI
 - **Registration Numbers:**
   1. RA2311026011029
-  2. RA2311026011043
+  2. RA2311026011046
   3. RA2311026011081
 - **Title of Work:** SIMULATION STUDY OF MEASUREMENT-DEVICE-INDEPENDENT QUANTUM KEY DISTRIBUTION (MDI-QKD) AND EAVESDROPPING DETECTION IN QUANTUM NETWORKS
 
@@ -84,7 +84,7 @@ I understand that any false claim for this work will be penalized in accordance 
 | DECLARATION: |
 |:---|
 | I am aware of and understand the University’s policy on Academic misconduct and plagiarism and I certify that this assessment is my / our own work, except where indicated by referring, and that I have followed the good academic practices noted above. |
-| <br/><br/> **MOHAMMED SAAQIB** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **SAAD AKTHAR KHAN** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **ASHWATH SAI**<br/>(RA2311026011029) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011043) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011081) |
+| <br/><br/> **MOHAMMED SAAQIB** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **SAAD AKTHER KHAN** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **ASHWATH SAI**<br/>(RA2311026011029) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011046) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011081) |
 | *Date: 12-05-2026* |
 
 <div style="page-break-after: always;"></div>
@@ -100,7 +100,7 @@ I understand that any false claim for this work will be penalized in accordance 
 
 </div>
 
-Certified that 21CSP302L - Project report titled **“SIMULATION STUDY OF MEASUREMENT-DEVICE-INDEPENDENT QUANTUM KEY DISTRIBUTION (MDI-QKD) AND EAVESDROPPING DETECTION IN QUANTUM NETWORKS”** is the bonafide work of **“MOHAMMED SAAQIB [RA2311026011029], SAAD AKTHAR KHAN [RA2311026011043], and ASHWATH SAI [RA2311026011081]”** who carried out the project work under my supervision. Certified further, that to the best of my knowledge the work reported herein does not form any other project report or dissertation on the basis of which a degree or award was conferred on an earlier occasion on this or any other candidate.
+Certified that 21CSP302L - Project report titled **“SIMULATION STUDY OF MEASUREMENT-DEVICE-INDEPENDENT QUANTUM KEY DISTRIBUTION (MDI-QKD) AND EAVESDROPPING DETECTION IN QUANTUM NETWORKS”** is the bonafide work of **“MOHAMMED SAAQIB [RA2311026011029], SAAD AKTHER KHAN [RA2311026011046], and ASHWATH SAI [RA2311026011081]”** who carried out the project work under my supervision. Certified further, that to the best of my knowledge the work reported herein does not form any other project report or dissertation on the basis of which a degree or award was conferred on an earlier occasion on this or any other candidate.
 
 <br/><br/><br/>
 
@@ -149,7 +149,7 @@ We sincerely thank all the staff members of the Department of Computational Inte
 
 <div align="right">
 <strong>MOHAMMED SAAQIB</strong><br/>
-<strong>SAAD AKTHAR KHAN</strong><br/>
+<strong>SAAD AKTHER KHAN</strong><br/>
 <strong>ASHWATH SAI</strong>
 </div>
 
@@ -947,7 +947,7 @@ Planned future improvements include:
 **"A Comparative Simulation Study of Measurement-Device-Independent Quantum Key Distribution (MDI-QKD) and Detector-Blinding Vulnerabilities in Quantum Cryptographic Networks"**
 
 ### Authors:
-- Mohammed Saaqib$^1$, Saad Akthar Khan$^1$, Ashwath Sai$^1$, Samsudeen$^2$
+- Mohammed Saaqib$^1$, Saad Akther Khan$^1$, Ashwath Sai$^1$, Samsudeen$^2$
 - $^1$ Department of Computational Intelligence, SRM Institute of Science and Technology, Kattankulathur, Chennai, India
 - $^2$ Assistant Professor, Department of Computational Intelligence, SRM Institute of Science and Technology
 

@@ -2,7 +2,7 @@
 """
 Full PDF Generator for SRM B.Tech 21CSP302L Project Report
 Title: SIMULATION STUDY OF MEASUREMENT-DEVICE-INDEPENDENT QUANTUM KEY DISTRIBUTION (MDI-QKD) AND EAVESDROPPING DETECTION IN QUANTUM NETWORKS
-Authors: Mohammed Saaqib, Saad Akthar Khan, Ashwath Sai
+Authors: Mohammed Saaqib, Saad Akther Khan, Ashwath Sai
 Supervisor: Mr. Samsudeen
 Institution: SRM Institute of Science and Technology
 """
@@ -192,7 +192,7 @@ def build_pdf():
     
     students_cover_text = """
     <b>MOHAMMED SAAQIB [RA2311026011029]</b><br/>
-    <b>SAAD AKTHAR KHAN [RA2311026011043]</b><br/>
+    <b>SAAD AKTHER KHAN [RA2311026011046]</b><br/>
     <b>ASHWATH SAI [RA2311026011081]</b>
     """
     story.append(Paragraph(students_cover_text, ParagraphStyle('StudList', fontName='Times-Bold', fontSize=12.5, leading=18, alignment=1, spaceAfter=18)))
@@ -221,8 +221,8 @@ def build_pdf():
 
     meta_table_data = [
         [Paragraph("<b>Degree / Course</b>", body_bold), Paragraph(": Bachelor of Technology in Computer Science and Engineering", body_style)],
-        [Paragraph("<b>Student Names</b>", body_bold), Paragraph(": 1. MOHAMMED SAAQIB &nbsp;&nbsp; 2. SAAD AKTHAR KHAN &nbsp;&nbsp; 3. ASHWATH SAI", body_style)],
-        [Paragraph("<b>Registration Numbers</b>", body_bold), Paragraph(": 1. RA2311026011029 &nbsp;&nbsp; 2. RA2311026011043 &nbsp;&nbsp; 3. RA2311026011081", body_style)],
+        [Paragraph("<b>Student Names</b>", body_bold), Paragraph(": 1. MOHAMMED SAAQIB &nbsp;&nbsp; 2. SAAD AKTHER KHAN &nbsp;&nbsp; 3. ASHWATH SAI", body_style)],
+        [Paragraph("<b>Registration Numbers</b>", body_bold), Paragraph(": 1. RA2311026011029 &nbsp;&nbsp; 2. RA2311026011046 &nbsp;&nbsp; 3. RA2311026011081", body_style)],
         [Paragraph("<b>Title of Work</b>", body_bold), Paragraph(": SIMULATION STUDY OF MEASUREMENT-DEVICE-INDEPENDENT QUANTUM KEY DISTRIBUTION (MDI-QKD) AND EAVESDROPPING DETECTION IN QUANTUM NETWORKS", body_style)]
     ]
     meta_table = Table(meta_table_data, colWidths=[1.6*inch, 5.0*inch])
@@ -254,8 +254,8 @@ def build_pdf():
 
     decl_box_content = [
         [Paragraph("<b>DECLARATION:</b><br/>I am aware of and understand the University’s policy on Academic misconduct and plagiarism and I certify that this assessment is my / our own work, except where indicated by referring, and that I have followed the good academic practices noted above.<br/><br/><br/>"
-                   "<b>Mohammed Saaqib</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Saad Akthar Khan</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Ashwath Sai</b><br/>"
-                   "(RA2311026011029) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011043) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011081)<br/>"
+                   "<b>Mohammed Saaqib</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Saad Akther Khan</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Ashwath Sai</b><br/>"
+                   "(RA2311026011029) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011046) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(RA2311026011081)<br/>"
                    "Date: 12-05-2026", body_style)]
     ]
     decl_table = Table(decl_box_content, colWidths=[6.6*inch])
@@ -279,7 +279,7 @@ def build_pdf():
     bonafide_text = (
         "Certified that 21CSP302L - Project report titled <b>“SIMULATION STUDY OF MEASUREMENT-DEVICE-INDEPENDENT "
         "QUANTUM KEY DISTRIBUTION (MDI-QKD) AND EAVESDROPPING DETECTION IN QUANTUM NETWORKS”</b> is the bonafide work of "
-        "<b>“MOHAMMED SAAQIB [RA2311026011029], SAAD AKTHAR KHAN [RA2311026011043], and ASHWATH SAI [RA2311026011081]”</b> "
+        "<b>“MOHAMMED SAAQIB [RA2311026011029], SAAD AKTHER KHAN [RA2311026011046], and ASHWATH SAI [RA2311026011081]”</b> "
         "who carried out the project work under my supervision. Certified further, that to the best of my knowledge the work "
         "reported herein does not form any other project report or dissertation on the basis of which a degree or award was conferred "
         "on an earlier occasion on this or any other candidate."
@@ -338,7 +338,7 @@ def build_pdf():
         story.append(Paragraph(p, body_style))
 
     story.append(Spacer(1, 15))
-    story.append(Paragraph("<b>MOHAMMED SAAQIB<br/>SAAD AKTHAR KHAN<br/>ASHWATH SAI</b>", ParagraphStyle('AckSign', fontName='Times-Bold', fontSize=11, leading=15, alignment=2)))
+    story.append(Paragraph("<b>MOHAMMED SAAQIB<br/>SAAD AKTHER KHAN<br/>ASHWATH SAI</b>", ParagraphStyle('AckSign', fontName='Times-Bold', fontSize=11, leading=15, alignment=2)))
     story.append(PageBreak())
 
     # =========================================================================
@@ -877,7 +877,7 @@ def build_pdf():
     story.append(Paragraph("<b>APPENDIX C: CONFERENCE PUBLICATION DRAFT</b>", chapter_title))
     story.append(Paragraph(
         "<b>Title:</b> A Comparative Simulation Study of Measurement-Device-Independent Quantum Key Distribution (MDI-QKD) and Detector-Blinding Vulnerabilities in Quantum Cryptographic Networks<br/>"
-        "<b>Authors:</b> Mohammed Saaqib, Saad Akthar Khan, Ashwath Sai, Samsudeen<br/>"
+        "<b>Authors:</b> Mohammed Saaqib, Saad Akther Khan, Ashwath Sai, Samsudeen<br/>"
         "<b>Affiliation:</b> Department of Computational Intelligence, SRM Institute of Science and Technology, Kattankulathur, Chennai, India<br/>"
         "<b>Conference Target:</b> International Conference on Advances in Computing, Quantum Information, and Secure Cyber Networks (ICACQS 2026).",
         body_style
